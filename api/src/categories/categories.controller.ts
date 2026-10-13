@@ -7,8 +7,11 @@ import {
   Param,
   Body,
   HttpCode,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { CategoriesService } from './categories.service.js';
+import { CreateCategoryDto } from './dto/create-category.dto.js';
+import { UpdateCategoryDto } from './dto/update-category.dto.js';
 
 // el controlador se encarga del HTTP:
 // qué ruta maneja,
@@ -25,23 +28,26 @@ export class CategoriesController {
   }
 
   @Get(':id')
-  getOne(@Param('id') id: string) {
-    return this.categoriesService.getOne(Number(id));
+  getOne(@Param('id', ParseIntPipe) id: number) {
+    return this.categoriesService.getOne(id);
   }
 
   @Post()
-  createOne(@Body('name') name: string) {
-    return this.categoriesService.createOne(name);
+  createOne(@Body() body: CreateCategoryDto) {
+    return this.categoriesService.createOne(body.name);
   }
 
   @Delete(':id')
   @HttpCode(204)
-  deleteOne(@Param('id') id: string) {
-    this.categoriesService.deleteOne(Number(id));
+  deleteOne(@Param('id', ParseIntPipe) id: number) {
+    this.categoriesService.deleteOne(id);
   }
 
   @Patch(':id')
-  editOne(@Param('id') id: string, @Body('name') name: string) {
-    return this.categoriesService.updateOne(Number(id), name);
+  updateOne(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: UpdateCategoryDto,
+  ) {
+    return this.categoriesService.updateOne(id, body.name);
   }
 }

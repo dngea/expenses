@@ -31,7 +31,7 @@ export class CategoriesService {
 
   createOne(name: string) {
     const existingCategory = this.categories.find(
-      (c) => c.name.toLocaleLowerCase() === name.toLocaleLowerCase(),
+      (c) => c.name.toLowerCase() === name.toLowerCase(),
     );
 
     if (existingCategory) {
