@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Delete,
+  Patch,
   Param,
   Body,
   HttpCode,
@@ -37,5 +38,10 @@ export class CategoriesController {
   @HttpCode(204)
   deleteOne(@Param('id') id: string) {
     this.categoriesService.deleteOne(Number(id));
+  }
+
+  @Patch(':id')
+  editOne(@Param('id') id: string, @Body('name') name: string) {
+    return this.categoriesService.updateOne(Number(id), name);
   }
 }

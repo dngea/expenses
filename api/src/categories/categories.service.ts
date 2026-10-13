@@ -58,4 +58,19 @@ export class CategoriesService {
 
     this.categories.splice(index, 1);
   }
+
+  updateOne(id: number, name: string) {
+    const categoryToEdit = this.getOne(id); // inside getOne throws error if cat not defined
+
+    const categoryWithSameName = this.categories.find(
+      (c) => c.name.toLowerCase() === name.toLowerCase(),
+    );
+
+    if (categoryWithSameName && categoryWithSameName.id !== id)
+      throw new ConflictException(`Category with name ${name} already exists`);
+
+    categoryToEdit.name = name;
+
+    return categoryToEdit;
+  }
 }
