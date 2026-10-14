@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -12,9 +13,17 @@ import pg from 'pg';
 
 @Injectable()
 export class CategoriesService {
-  private pool = new pg.Pool({
-    connectionString: process.env.DATABASE_URL,
-  });
+  // this here:
+  // constructor(@Inject(pg.Pool) private readonly pool: pg.Pool) {}
+
+  // is the same as
+  // --
+  private readonly pool: pg.Pool;
+
+  constructor(@Inject(pg.Pool) pool: pg.Pool) {
+    this.pool = pool;
+  }
+  // --
 
   async getAll() {
     const result = await this.pool.query('SELECT * FROM categories');
