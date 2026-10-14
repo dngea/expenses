@@ -40,14 +40,14 @@ export class CategoriesController {
   @Delete(':id')
   @HttpCode(204)
   deleteOne(@Param('id', ParseIntPipe) id: number) {
-    this.categoriesService.deleteOne(id);
+    return this.categoriesService.deleteOne(id);
   }
 
-  // @Patch(':id')
-  // updateOne(
-  //   @Param('id', ParseIntPipe) id: number,
-  //   @Body() body: UpdateCategoryDto,
-  // ) {
-  //   return this.categoriesService.updateOne(id, body.name);
-  // }
+  @Patch(':id')
+  updateOne(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: UpdateCategoryDto,
+  ) {
+    return this.categoriesService.updateOne(id, body.name);
+  }
 }
