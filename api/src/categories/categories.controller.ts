@@ -43,11 +43,11 @@ export class CategoriesController {
     this.categoriesService.deleteOne(id);
   }
 
-  @Patch(':id')
-  updateOne(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() body: UpdateCategoryDto,
-  ) {
-    return this.categoriesService.updateOne(id, body.name);
-  }
+  // @Patch(':id')
+  // updateOne(
+  //   @Param('id', ParseIntPipe) id: number,
+  //   @Body() body: UpdateCategoryDto,
+  // ) {
+  //   return this.categoriesService.updateOne(id, body.name);
+  // }
 }

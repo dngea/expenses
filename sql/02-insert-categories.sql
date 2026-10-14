@@ -1,1 +1,1 @@
-INSERT INTO categories (name) VALUES ('Deporte');
+INSERT INTO categories (name) VALUES ('Transporte');
