@@ -11,6 +11,9 @@ import pg from 'pg';
 // buscar, validar y guardar
 // devuelve "DATOS"
 
+const categoryExistsMessage = (name: string) =>
+  `Category with name ${name} already exists`;
+
 @Injectable()
 export class CategoriesService {
   // this here:
@@ -26,7 +29,9 @@ export class CategoriesService {
   // --
 
   async getAll() {
-    const result = await this.pool.query('SELECT * FROM categories');
+    const result = await this.pool.query(
+      'SELECT * FROM categories ORDER BY id',
+    );
     return result.rows;
   }
 
@@ -52,15 +57,24 @@ export class CategoriesService {
     const existingCategory = result.rows[0];
 
     if (existingCategory) {
-      throw new ConflictException(`Category with name ${name} already exists`);
+      throw new ConflictException(categoryExistsMessage(name));
     }
 
-    const insertResult = await this.pool.query(
-      'INSERT INTO categories (name) VALUES ($1) RETURNING *',
-      [name],
-    );
+    try {
+      const insertResult = await this.pool.query(
+        'INSERT INTO categories (name) VALUES ($1) RETURNING *',
+        [name],
+      );
 
-    return insertResult.rows[0];
+      return insertResult.rows[0];
+    } catch (error) {
+      if (error instanceof pg.DatabaseError && error.code === '23505') {
+        throw new ConflictException(categoryExistsMessage(name));
+      }
+
+      // rethrow error
+      throw error;
+    }
   }
 
   async deleteOne(id: number) {
@@ -80,15 +94,23 @@ export class CategoriesService {
     ).rows[0];
 
     if (categoryWithSameName && categoryWithSameName.id !== id)
-      throw new ConflictException(`Category with name ${name} already exists`);
+      throw new ConflictException(categoryExistsMessage(name));
 
-    const categoryEdited = (
-      await this.pool.query(
-        'UPDATE categories SET name = $1 WHERE id = $2 RETURNING *',
-        [name, id],
-      )
-    ).rows[0];
+    try {
+      const categoryEdited = (
+        await this.pool.query(
+          'UPDATE categories SET name = $1 WHERE id = $2 RETURNING *',
+          [name, id],
+        )
+      ).rows[0];
 
-    return categoryEdited;
+      return categoryEdited;
+    } catch (error) {
+      if (error instanceof pg.DatabaseError && error.code === '23505') {
+        throw new ConflictException(categoryExistsMessage(name));
+      }
+
+      throw error;
+    }
   }
 }
