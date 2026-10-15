@@ -80,7 +80,17 @@ export class CategoriesService {
   async deleteOne(id: number) {
     await this.getOne(id); // if does not exist, throws error
 
-    await this.pool.query('DELETE FROM categories WHERE id = $1', [id]);
+    try {
+      await this.pool.query('DELETE FROM categories WHERE id = $1', [id]);
+    } catch (error) {
+      if (error instanceof pg.DatabaseError && error.code === '23503') {
+        throw new ConflictException(
+          `This category has associated expenses and cannot be deleted`,
+        );
+      }
+
+      throw error;
+    }
   }
 
   async updateOne(id: number, name: string) {
