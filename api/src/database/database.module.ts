@@ -5,10 +5,12 @@ import pg from 'pg';
   providers: [
     {
       provide: pg.Pool,
-      useFactory: () =>
-        new pg.Pool({
+      useFactory: () => {
+        pg.types.setTypeParser(1082, (value) => value);
+        return new pg.Pool({
           connectionString: process.env.DATABASE_URL,
-        }),
+        });
+      },
     },
   ],
   exports: [pg.Pool],
