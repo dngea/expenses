@@ -7,7 +7,6 @@ import {
 } from '@nestjs/common';
 import pg from 'pg';
 import { CreateExpenseDto } from './dto/create-expense.dto.js';
-import { NotFoundError } from 'rxjs';
 
 @Injectable()
 export class ExpensesService {
@@ -15,6 +14,28 @@ export class ExpensesService {
 
   constructor(@Inject(pg.Pool) pool: pg.Pool) {
     this.pool = pool;
+  }
+
+  async getAll(params: string | undefined) {
+    console.log('params >>', params);
+    const getResponse = await this.pool.query(
+      `
+        SELECT 
+            expenses.id, 
+            expenses.amount,
+            expenses.spent_at,
+            expenses.description,
+            categories.name AS category_name,
+            expenses.category_id
+        FROM expenses 
+        JOIN categories ON expenses.category_id = categories.id
+        ORDER BY expenses.spent_at DESC, expenses.id DESC
+        `,
+    );
+
+    const result = getResponse.rows;
+
+    return result;
   }
 
   async createOne(data: CreateExpenseDto) {

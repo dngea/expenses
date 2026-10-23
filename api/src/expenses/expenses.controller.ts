@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, Param } from '@nestjs/common';
 import { CreateExpenseDto } from './dto/create-expense.dto.js';
 import { ExpensesService } from './expenses.service.js';
 
@@ -8,6 +8,11 @@ export class ExpensesController {
 
   constructor(expensesService: ExpensesService) {
     this.expensesService = expensesService;
+  }
+
+  @Get()
+  getAll(@Param() params: string | undefined) {
+    return this.expensesService.getAll(params);
   }
 
   @Post()
