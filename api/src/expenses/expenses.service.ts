@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import pg from 'pg';
 import { CreateExpenseDto } from './dto/create-expense.dto.js';
+import { ListExpensesQueryDto } from './dto/list-expenses-query.dto.js';
 
 @Injectable()
 export class ExpensesService {
@@ -16,9 +17,27 @@ export class ExpensesService {
     this.pool = pool;
   }
 
-  async getAll(params: string | undefined) {
-    console.log('params >>', params);
-    const getResponse = await this.pool.query(
+  async getAll(query: ListExpensesQueryDto) {
+    if (!query.month) {
+      const getResponse = await this.pool.query(
+        `
+          SELECT 
+              expenses.id, 
+              expenses.amount,
+              expenses.spent_at,
+              expenses.description,
+              categories.name AS category_name,
+              expenses.category_id
+          FROM expenses 
+          JOIN categories ON expenses.category_id = categories.id
+          ORDER BY expenses.spent_at DESC, expenses.id DESC
+          `,
+      );
+      const result = getResponse.rows;
+      return result;
+    }
+
+    const getResponseQuery = await this.pool.query(
       `
         SELECT 
             expenses.id, 
@@ -29,13 +48,13 @@ export class ExpensesService {
             expenses.category_id
         FROM expenses 
         JOIN categories ON expenses.category_id = categories.id
+        WHERE TO_CHAR(expenses.spent_at, 'YYYY-MM') = $1
         ORDER BY expenses.spent_at DESC, expenses.id DESC
         `,
+      [query.month],
     );
 
-    const result = getResponse.rows;
-
-    return result;
+    return getResponseQuery.rows;
   }
 
   async createOne(data: CreateExpenseDto) {

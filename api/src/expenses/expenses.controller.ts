@@ -1,6 +1,7 @@
-import { Body, Controller, Get, Post, Param } from '@nestjs/common';
+import { Body, Controller, Get, Post, Param, Query } from '@nestjs/common';
 import { CreateExpenseDto } from './dto/create-expense.dto.js';
 import { ExpensesService } from './expenses.service.js';
+import { ListExpensesQueryDto } from './dto/list-expenses-query.dto.js';
 
 @Controller('expenses')
 export class ExpensesController {
@@ -11,8 +12,8 @@ export class ExpensesController {
   }
 
   @Get()
-  getAll(@Param() params: string | undefined) {
-    return this.expensesService.getAll(params);
+  getAll(@Query() query: ListExpensesQueryDto) {
+    return this.expensesService.getAll(query);
   }
 
   @Post()
