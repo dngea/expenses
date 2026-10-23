@@ -84,4 +84,51 @@ export class ExpensesService {
       throw error;
     }
   }
+
+  async getSummary(query: ListExpensesQueryDto) {
+    const hasQuery = !!query.month;
+
+    if (!hasQuery) {
+      const getResponse = await this.pool.query(
+        `
+        SELECT 
+          categories.id AS category_id,
+          categories.name AS category_name,
+          SUM(expenses.amount) AS total
+        FROM 
+          categories
+        JOIN
+          expenses ON expenses.category_id = categories.id
+        GROUP BY
+          categories.id   
+        ORDER BY 
+          total DESC, categories.id asc    
+        `,
+      );
+
+      return getResponse.rows;
+    }
+
+    const getResponseQuery = await this.pool.query(
+      `
+        SELECT 
+          categories.id AS category_id,
+          categories.name AS category_name,
+          SUM(expenses.amount) AS total
+        FROM 
+          categories
+        JOIN
+          expenses ON expenses.category_id = categories.id
+        WHERE 
+          TO_CHAR(expenses.spent_at, 'YYYY-MM') = $1
+        GROUP BY
+          categories.id   
+        ORDER BY 
+          total DESC, categories.id asc 
+        `,
+      [query.month],
+    );
+
+    return getResponseQuery.rows;
+  }
 }

@@ -16,6 +16,11 @@ export class ExpensesController {
     return this.expensesService.getAll(query);
   }
 
+  @Get('summary')
+  getSummary(@Query() query: ListExpensesQueryDto) {
+    return this.expensesService.getSummary(query);
+  }
+
   @Post()
   createOne(@Body() body: CreateExpenseDto) {
     return this.expensesService.createOne(body);
