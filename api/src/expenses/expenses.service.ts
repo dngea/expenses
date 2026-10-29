@@ -1,13 +1,16 @@
 import {
   Injectable,
   Inject,
-  ConflictException,
-  NotFoundException,
   UnprocessableEntityException,
+  NotFoundException,
 } from '@nestjs/common';
 import pg from 'pg';
-import { CreateExpenseDto } from './dto/create-expense.dto.js';
+import {
+  CreateExpenseDto,
+  UpdateExpenseDto,
+} from './dto/create-expense.dto.js';
 import { ListExpensesQueryDto } from './dto/list-expenses-query.dto.js';
+import { throwError } from 'rxjs';
 
 @Injectable()
 export class ExpensesService {
@@ -57,6 +60,30 @@ export class ExpensesService {
     return getResponseQuery.rows;
   }
 
+  async getOne(id: number) {
+    const result = await this.pool.query(
+      `
+      SELECT 
+        expenses.id,
+        expenses.amount,
+        expenses.category_id,
+        expenses.spent_at,
+        expenses.description,
+        categories.name AS category_name
+      FROM expenses
+      JOIN categories ON expenses.category_id = categories.id
+      WHERE expenses.id = $1
+      `,
+      [id],
+    );
+
+    // is array empty ?
+    if (result.rows.length === 0) {
+      throw new NotFoundException(`The expense with id ${id} does not exist`);
+    }
+    return result.rows[0];
+  }
+
   async createOne(data: CreateExpenseDto) {
     const { category_id, amount, spent_at, description } = data;
 
@@ -75,7 +102,6 @@ export class ExpensesService {
 
       return result;
     } catch (error) {
-      console.error('error >>', error);
       if (error instanceof pg.DatabaseError && error.code === '23503') {
         throw new UnprocessableEntityException(
           `Category with id: ${category_id} does not exist`,
@@ -130,5 +156,64 @@ export class ExpensesService {
     );
 
     return getResponseQuery.rows;
+  }
+
+  async updateOne(id: number, input: UpdateExpenseDto) {
+    const entry = await this.getOne(id);
+
+    // no need to return or check if entry exist, it would throw error in getOne()
+
+    const updated = {
+      amount: input.amount ?? entry.amount,
+      spent_at: input.spent_at ?? entry.spent_at,
+      category_id: input.category_id ?? entry.category_id,
+      description: input.description ?? entry.description,
+    };
+
+    try {
+      const response = await this.pool.query(
+        `
+        UPDATE 
+          expenses 
+        SET 
+          amount = $2, 
+          spent_at = $3, 
+          category_id= $4, 
+          description = $5
+        WHERE
+          expenses.id = $1
+        RETURNING *
+        `,
+        [
+          id,
+          updated.amount,
+          updated.spent_at,
+          updated.category_id,
+          updated.description,
+        ],
+      );
+
+      return response.rows[0];
+    } catch (error) {
+      if (error instanceof pg.DatabaseError && error.code === '23503') {
+        throw new UnprocessableEntityException(
+          `Category id ${updated.category_id} does not exist in categories`,
+        );
+      }
+
+      throw error;
+    }
+  }
+
+  async deleteOne(id: number) {
+    await this.getOne(id);
+
+    await this.pool.query(
+      `
+      DELETE FROM expenses
+      WHERE expenses.id = $1
+      `,
+      [id],
+    );
   }
 }
