@@ -1,0 +1,9 @@
+DROP TABLE IF EXISTS users;
+
+CREATE TABLE users (
+    -- columnas
+    id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    email TEXT UNIQUE NOT NULL,
+    username TEXT NOT NULL,
+    password_hash TEXT NOT NULL
+);

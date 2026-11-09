@@ -10,12 +10,10 @@ import {
   Delete,
   HttpCode,
 } from '@nestjs/common';
-import {
-  CreateExpenseDto,
-  UpdateExpenseDto,
-} from './dto/create-expense.dto.js';
+import { CreateExpenseDto } from './dto/create-expense.dto.js';
 import { ExpensesService } from './expenses.service.js';
 import { ListExpensesQueryDto } from './dto/list-expenses-query.dto.js';
+import { UpdateExpenseDto } from './dto/update-expense.dto.js';
 
 @Controller('expenses')
 export class ExpensesController {
