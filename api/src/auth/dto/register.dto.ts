@@ -13,8 +13,12 @@ export class RegisterUserDto {
   username: string;
 
   @IsEmail()
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.trim().toLowerCase() : value,
+  )
   email: string;
 
   @IsStrongPassword()
+  // TODO: add matches to add message of what is strong password
   password: string;
 }
