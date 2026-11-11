@@ -9,12 +9,15 @@ import {
   ParseIntPipe,
   Delete,
   HttpCode,
+  UseGuards,
 } from '@nestjs/common';
 import { CreateExpenseDto } from './dto/create-expense.dto.js';
 import { ExpensesService } from './expenses.service.js';
 import { ListExpensesQueryDto } from './dto/list-expenses-query.dto.js';
 import { UpdateExpenseDto } from './dto/update-expense.dto.js';
+import { JwtAuthGuard } from '../auth/jwt-auth/jwt-auth.guard.js';
 
+@UseGuards(JwtAuthGuard)
 @Controller('expenses')
 export class ExpensesController {
   private readonly expensesService: ExpensesService;
