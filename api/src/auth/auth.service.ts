@@ -87,4 +87,21 @@ export class AuthService {
 
     return { access_token: accessToken };
   }
+
+  async me(userId: number) {
+    const result = await this.pool.query(
+      `
+        SELECT users.id, users.username, users.email
+        FROM users
+        WHERE users.id = $1
+        `,
+      [userId],
+    );
+
+    if (!result.rows[0]) {
+      throw new UnauthorizedException('Session is no longer valid');
+    }
+
+    return result.rows[0];
+  }
 }
