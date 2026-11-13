@@ -1,9 +1,16 @@
-import { useState } from 'react';
-import { Outlet } from 'react-router';
-import { Drawer } from './Drawer';
+import { useState } from "react";
+import { Outlet } from "react-router";
+import { Drawer } from "./Drawer";
+import { useAuth } from "../context/AuthContext";
+
+import { LoginForm } from "./LoginForm";
 
 export function Layout() {
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const { authState } = useAuth();
+
+  console.log("authSate >>", authState);
 
   return (
     <div className="mx-auto flex min-h-screen max-w-2xl flex-col">
@@ -14,7 +21,13 @@ export function Layout() {
           className="rounded-full p-3 hover:bg-teal-600"
           aria-label="Open menu"
         >
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            aria-hidden="true"
+          >
             <rect y="3" width="20" height="2" rx="1" />
             <rect y="9" width="20" height="2" rx="1" />
             <rect y="15" width="20" height="2" rx="1" />
@@ -26,7 +39,9 @@ export function Layout() {
       <Drawer open={menuOpen} onClose={() => setMenuOpen(false)} />
 
       <main className="flex-1 p-4">
-        <Outlet />
+        {authState.status === "authenticated" && <Outlet />}
+        {authState.status === "unauthenticated" && <LoginForm />}
+        {authState.status === "loading" && <p>Loading....</p>}
       </main>
     </div>
   );

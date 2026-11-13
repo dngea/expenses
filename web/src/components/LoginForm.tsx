@@ -1,22 +1,25 @@
-import { useState, type FormEvent } from 'react';
-import { login, type LoginResponse } from '../api/auth';
-import { ErrorMessages } from './ErrorMessages';
-import { inputClass, labelClass, primaryButtonClass } from './ui';
+import { useState, type SubmitEvent } from "react";
+import { login } from "../api/auth";
+import { ErrorMessages } from "./ErrorMessages";
+import { inputClass, labelClass, primaryButtonClass } from "./ui";
+import { useAuth } from "../context/AuthContext";
 
-export function LoginForm({ onLoggedIn }: { onLoggedIn: (result: LoginResponse) => void }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+export function LoginForm() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<unknown>();
 
-  async function handleSubmit(e: FormEvent) {
+  const { refresh } = useAuth();
+
+  async function handleSubmit(e: SubmitEvent) {
     e.preventDefault();
     setSubmitting(true);
     setError(undefined);
     try {
-      const result = await login(email, password);
-      setPassword('');
-      onLoggedIn(result);
+      await login(email, password);
+      setPassword("");
+      refresh();
     } catch (err) {
       setError(err);
     } finally {
@@ -25,9 +28,14 @@ export function LoginForm({ onLoggedIn }: { onLoggedIn: (result: LoginResponse) 
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl bg-white p-5 shadow-sm">
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-4 rounded-2xl bg-white p-5 shadow-sm"
+    >
       <div>
-        <label htmlFor="email" className={labelClass}>Email</label>
+        <label htmlFor="email" className={labelClass}>
+          Email
+        </label>
         <input
           id="email"
           type="email"
@@ -40,7 +48,9 @@ export function LoginForm({ onLoggedIn }: { onLoggedIn: (result: LoginResponse) 
       </div>
 
       <div>
-        <label htmlFor="password" className={labelClass}>Password</label>
+        <label htmlFor="password" className={labelClass}>
+          Password
+        </label>
         <input
           id="password"
           type="password"
@@ -54,8 +64,12 @@ export function LoginForm({ onLoggedIn }: { onLoggedIn: (result: LoginResponse) 
 
       <ErrorMessages error={error} />
 
-      <button type="submit" className={`${primaryButtonClass} w-full py-3`} disabled={submitting}>
-        {submitting ? 'Logging in…' : 'Log in'}
+      <button
+        type="submit"
+        className={`${primaryButtonClass} w-full py-3`}
+        disabled={submitting}
+      >
+        {submitting ? "Logging in…" : "Log in"}
       </button>
     </form>
   );
