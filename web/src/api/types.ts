@@ -10,6 +10,16 @@ export type MonthString = string;
 export interface Category {
   id: number;
   name: string;
+  /** Color key from `CATEGORY_COLORS` (src/lib/categoryColors.ts), e.g. "blue". Not sent by the backend yet. */
+  color?: string | null;
+  /** Lucide icon name from `CATEGORY_ICONS` (src/lib/categoryIcons.ts), e.g. "shopping-cart". Not sent by the backend yet. */
+  icon?: string | null;
+}
+
+export interface NewCategory {
+  name: string;
+  color: string;
+  icon: string;
 }
 
 export interface Expense {

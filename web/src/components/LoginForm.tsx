@@ -30,7 +30,7 @@ export function LoginForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-4 rounded-2xl bg-white p-5 shadow-sm"
+      className="space-y-4 rounded-2xl bg-surface p-5 ring-1 ring-line"
     >
       <div>
         <label htmlFor="email" className={labelClass}>

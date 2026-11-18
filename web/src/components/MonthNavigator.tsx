@@ -7,7 +7,7 @@ interface MonthNavigatorProps {
 }
 
 export function MonthNavigator({ month, onChange }: MonthNavigatorProps) {
-  const buttonClass = 'rounded-full px-4 py-2 text-xl text-slate-600 hover:bg-slate-200';
+  const buttonClass = 'rounded-full px-4 py-2 text-xl text-ink-muted hover:bg-surface-2';
   return (
     <div className="flex items-center justify-between">
       <button type="button" className={buttonClass} onClick={() => onChange(shiftMonth(month, -1))} aria-label="Previous month">

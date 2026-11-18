@@ -1,4 +1,4 @@
-import { getExpenseSummary, type ExpenseFilter } from '../api/expenses';
+import type { ExpenseFilter } from '../api/expenses';
 import type { CategoryTotal, MonthString } from '../api/types';
 
 export type Period = 'day' | 'week' | 'month' | 'year';
@@ -37,8 +37,11 @@ export function isPeriodSupported(period: Period): boolean {
 }
 
 /** Loads the per-category totals for a period. */
-export function fetchPeriodSummary(selection: PeriodSelection): Promise<CategoryTotal[]> {
+export function fetchPeriodSummary(
+  selection: PeriodSelection,
+  getSummary: (filter: ExpenseFilter) => Promise<CategoryTotal[]>,
+): Promise<CategoryTotal[]> {
   const filter = periodToFilter(selection);
   if (!filter) return Promise.reject(new Error(`Period "${selection.period}" is not supported yet.`));
-  return getExpenseSummary(filter);
+  return getSummary(filter);
 }

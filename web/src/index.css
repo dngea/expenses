@@ -1,5 +1,75 @@
 @import "tailwindcss";
 
+/*
+ * Dark theme with a green tint. Semantic tokens so components use roles
+ * (bg-surface, text-ink-muted, bg-accent…) instead of raw palette colors.
+ */
+@theme {
+  --color-page: #0b1513;
+  --color-surface: #14211e;
+  --color-surface-2: #1c2d29;
+  --color-line: #263a35;
+  --color-ink: #e8f0ed;
+  --color-ink-muted: #9fb3ad;
+  --color-ink-faint: #6f857f;
+  --color-accent: #10b981;
+  --color-accent-strong: #059669;
+  --color-accent-soft: #10b98126;
+  --color-accent-ink: #6ee7b7;
+
+  /* Categorical chart colors (validated for the dark surface, incl. color-blind checks). */
+  --color-series-1: #3987e5;
+  --color-series-2: #d95926;
+  --color-series-3: #199e70;
+  --color-series-4: #c98500;
+  --color-series-5: #d55181;
+  --color-series-6: #0ca30c;
+  --color-series-7: #9085e9;
+  --color-series-8: #e66767;
+  --color-series-other: #6f857f;
+}
+
+/*
+ * Income view: the same dark theme with an amber tint instead of green
+ * (page, cards, borders and text, plus the accent). Set on <html> by HomePage.
+ */
+[data-mode="incomes"] {
+  --color-page: #15110a;
+  --color-surface: #211b11;
+  --color-surface-2: #2d2518;
+  --color-line: #3a3020;
+  --color-ink: #f0ece6;
+  --color-ink-muted: #b3a99a;
+  --color-ink-faint: #857b6c;
+  --color-series-other: #857b6c;
+  --color-accent: #f5b83d;
+  --color-accent-strong: #d99a1e;
+  --color-accent-soft: #f5b83d26;
+  --color-accent-ink: #fcd88a;
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 1ms !important;
+  }
+}
+
+html {
+  color-scheme: dark;
+}
+
 html,
 body,
 #root {
@@ -7,7 +77,7 @@ body,
 }
 
 body {
-  @apply bg-slate-50 text-slate-900 antialiased;
+  @apply bg-page text-ink antialiased;
 }
 
 .debug {

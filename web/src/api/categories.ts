@@ -1,10 +1,11 @@
 import { apiFetch } from './client';
-import type { Category } from './types';
+import type { Category, NewCategory } from './types';
 
 export function getCategories(): Promise<Category[]> {
   return apiFetch<Category[]>('/categories');
 }
 
-export function createCategory(name: string): Promise<Category> {
-  return apiFetch<Category>('/categories', { method: 'POST', body: { name } });
+/** `color` and `icon` are keys ("blue", "shopping-cart"); see src/lib/categoryColors.ts and categoryIcons.ts. */
+export function createCategory(category: NewCategory): Promise<Category> {
+  return apiFetch<Category>('/categories', { method: 'POST', body: category });
 }
