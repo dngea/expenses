@@ -3,6 +3,7 @@ import {
   Inject,
   UnprocessableEntityException,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import pg from 'pg';
 import { CreateExpenseDto } from './dto/create-expense.dto.js';
@@ -51,8 +52,23 @@ export class ExpensesService {
     this.pool = pool;
   }
 
+  private validatePeriod(from?: string, to?: string) {
+    // missing one of them
+    if (!from || !to) {
+      throw new BadRequestException(
+        'Missing one of the period params (from, to)',
+      );
+    }
+
+    // valid period of time
+    if (from > to) {
+      throw new BadRequestException('from must be on or before to');
+    }
+  }
+
   async getAll(query: ListExpensesQueryDto) {
-    if (!query.month) {
+    // both missing
+    if (!query.from && !query.to) {
       const result = await this.pool.query(
         `
           ${EXPENSE_WITH_CATEGORY_QUERY}
@@ -62,13 +78,17 @@ export class ExpensesService {
       return result.rows;
     }
 
+    this.validatePeriod(query.from, query.to);
+
     const result = await this.pool.query(
       `
         ${EXPENSE_WITH_CATEGORY_QUERY}
-        WHERE TO_CHAR(expenses.spent_at, 'YYYY-MM') = $1
+        WHERE 
+          expenses.spent_at >= $1
+          AND expenses.spent_at <= $2
         ${ORDER_BY_EXPENSE_DATE}
         `,
-      [query.month],
+      [query.from, query.to],
     );
 
     return result.rows;
@@ -83,7 +103,6 @@ export class ExpensesService {
       [id],
     );
 
-    // is array empty ?
     if (result.rows.length === 0) {
       throw new NotFoundException(`The expense with id ${id} does not exist`);
     }
@@ -118,7 +137,8 @@ export class ExpensesService {
   }
 
   async getSummary(query: ListExpensesQueryDto) {
-    if (!query.month) {
+    // if (from and to) missing, return all
+    if (!query.from && !query.to) {
       const result = await this.pool.query(`
         ${SUMMARY_SELECT_TOTAL}
         ${SUMMARY_GROUP_AND_ORDER} 
@@ -127,14 +147,17 @@ export class ExpensesService {
       return result.rows;
     }
 
+    this.validatePeriod(query.from, query.to);
+
     const result = await this.pool.query(
       `
         ${SUMMARY_SELECT_TOTAL}
         WHERE 
-          TO_CHAR(expenses.spent_at, 'YYYY-MM') = $1
+          expenses.spent_at >= $1
+          AND expenses.spent_at <= $2
         ${SUMMARY_GROUP_AND_ORDER} 
         `,
-      [query.month],
+      [query.from, query.to],
     );
 
     return result.rows;
