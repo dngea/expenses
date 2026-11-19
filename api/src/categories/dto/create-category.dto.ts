@@ -6,4 +6,12 @@ export class CreateCategoryDto {
   @IsNotEmpty()
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   name: string;
+
+  @IsString()
+  @IsNotEmpty()
+  icon: string;
+
+  @IsString()
+  @IsNotEmpty()
+  color: string;
 }

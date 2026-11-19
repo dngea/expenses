@@ -5,9 +5,11 @@ import {
   Delete,
   Patch,
   Param,
+  Query,
   Body,
   HttpCode,
   ParseIntPipe,
+  ParseBoolPipe,
   UseGuards,
 } from '@nestjs/common';
 import { CategoriesService } from './categories.service.js';
@@ -37,12 +39,19 @@ export class CategoriesController {
 
   @Post()
   createOne(@Body() body: CreateCategoryDto) {
-    return this.categoriesService.createOne(body.name);
+    return this.categoriesService.createOne(body);
   }
 
   @Delete(':id')
   @HttpCode(204)
-  deleteOne(@Param('id', ParseIntPipe) id: number) {
+  deleteOne(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('force', new ParseBoolPipe({ optional: true }))
+    force: boolean | undefined,
+  ) {
+    if (force) {
+      return this.categoriesService.deleteOneWithExpenses(id);
+    }
     return this.categoriesService.deleteOne(id);
   }
 
@@ -51,6 +60,6 @@ export class CategoriesController {
     @Param('id', ParseIntPipe) id: number,
     @Body() body: UpdateCategoryDto,
   ) {
-    return this.categoriesService.updateOne(id, body.name);
+    return this.categoriesService.updateOne(id, body);
   }
 }

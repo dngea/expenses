@@ -5,6 +5,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import pg from 'pg';
+import { CreateCategoryDto } from './dto/create-category.dto.js';
+import { UpdateCategoryDto } from './dto/update-category.dto.js';
 
 // El servicio, se ocupa:
 // de la Lógica, los datos,
@@ -49,27 +51,27 @@ export class CategoriesService {
     return category;
   }
 
-  async createOne(name: string) {
+  async createOne(body: CreateCategoryDto) {
     const result = await this.pool.query(
       'SELECT * FROM categories WHERE LOWER(name) = LOWER($1)',
-      [name],
+      [body.name],
     );
     const existingCategory = result.rows[0];
 
     if (existingCategory) {
-      throw new ConflictException(categoryExistsMessage(name));
+      throw new ConflictException(categoryExistsMessage(body.name));
     }
 
     try {
       const insertResult = await this.pool.query(
-        'INSERT INTO categories (name) VALUES ($1) RETURNING *',
-        [name],
+        'INSERT INTO categories (name, icon, color) VALUES ($1, $2, $3) RETURNING *',
+        [body.name, body.icon, body.color],
       );
 
       return insertResult.rows[0];
     } catch (error) {
       if (error instanceof pg.DatabaseError && error.code === '23505') {
-        throw new ConflictException(categoryExistsMessage(name));
+        throw new ConflictException(categoryExistsMessage(body.name));
       }
 
       // rethrow error
@@ -93,31 +95,70 @@ export class CategoriesService {
     }
   }
 
-  async updateOne(id: number, name: string) {
+  async deleteOneWithExpenses(id: number) {
+    // check id exists
+    await this.getOne(id);
+
+    const client = await this.pool.connect();
+
+    try {
+      await client.query(`BEGIN`);
+
+      // delete expenses associated
+      await client.query(
+        `
+        DELETE FROM expenses
+        WHERE expenses.category_id = $1
+        `,
+        [id],
+      );
+
+      // delete category
+      await client.query(
+        `
+          DELETE FROM categories
+          WHERE categories.id = $1
+          `,
+        [id],
+      );
+
+      await client.query(`COMMIT`);
+    } catch (error) {
+      await client.query(`ROLLBACK`);
+      throw error;
+    } finally {
+      // return connection to pool
+      client.release();
+    }
+  }
+
+  async updateOne(id: number, body: UpdateCategoryDto) {
     await this.getOne(id);
 
     const categoryWithSameName = (
       await this.pool.query(
         'SELECT * FROM categories WHERE LOWER(name) = LOWER($1)',
-        [name],
+        [body.name],
       )
     ).rows[0];
 
     if (categoryWithSameName && categoryWithSameName.id !== id)
-      throw new ConflictException(categoryExistsMessage(name));
+      throw new ConflictException(categoryExistsMessage(body.name));
 
     try {
       const categoryEdited = (
         await this.pool.query(
-          'UPDATE categories SET name = $1 WHERE id = $2 RETURNING *',
-          [name, id],
+          `UPDATE categories
+           SET name = $1, icon = $2, color = $3 
+           WHERE id = $4 RETURNING *`,
+          [body.name, body.icon, body.color, id],
         )
       ).rows[0];
 
       return categoryEdited;
     } catch (error) {
       if (error instanceof pg.DatabaseError && error.code === '23505') {
-        throw new ConflictException(categoryExistsMessage(name));
+        throw new ConflictException(categoryExistsMessage(body.name));
       }
 
       throw error;
