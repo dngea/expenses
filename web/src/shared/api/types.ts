@@ -39,5 +39,6 @@ export interface NewExpense {
   amount: number;
   category_id: number;
   spent_at: DateString;
-  description?: string;
+  /** `null` clears it when editing. */
+  description?: string | null;
 }

@@ -29,3 +29,12 @@ export async function countExpensesInCategory(categoryId: number): Promise<numbe
   const expenses = await apiFetch<Expense[]>('/expenses');
   return expenses.filter((e) => e.category_id === categoryId).length;
 }
+
+/** PATCH: the backend's UpdateExpenseDto accepts any subset; we send the whole entry. */
+export function updateExpense(id: number, expense: NewExpense): Promise<Expense> {
+  return apiFetch<Expense>(`/expenses/${id}`, { method: 'PATCH', body: expense });
+}
+
+export function deleteExpense(id: number): Promise<void> {
+  return apiFetch<void>(`/expenses/${id}`, { method: 'DELETE' });
+}

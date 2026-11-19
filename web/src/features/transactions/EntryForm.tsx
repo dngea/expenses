@@ -1,4 +1,5 @@
-import { useState, type SyntheticEvent } from "react";
+import { useState, type ReactNode, type SyntheticEvent } from "react";
+import type { NewExpense } from "../../shared/api/types";
 import type { ModeConfig } from "./mode";
 import { todayString } from "../../shared/lib/dates";
 import { useAsync } from "../../shared/lib/useAsync";
@@ -10,21 +11,56 @@ import {
   primaryButtonClass,
 } from "../../shared/components/ui";
 
-/** Form for a new expense or income; the API calls and texts come from `config`. */
+export interface EntryFormValues {
+  amount: string;
+  categoryId: number | null;
+  spentAt: string;
+  description: string;
+}
+
+export const EMPTY_ENTRY = (): EntryFormValues => ({
+  amount: "",
+  categoryId: null,
+  spentAt: todayString(),
+  description: "",
+});
+
+interface EntryFormProps {
+  /** Expenses or income: where the categories come from. */
+  config: ModeConfig;
+  /** Values the fields start with (empty for "new", the entry's data for "edit"). */
+  initialValues: EntryFormValues;
+  submitLabel: string;
+  /** Saves the values; throw to show the error in the form. */
+  onSubmit: (entry: NewExpense) => Promise<unknown>;
+  /** Called after a successful save. */
+  onDone: () => void;
+  /** Focus the amount on open. Off for editing, so the keyboard doesn't pop up on mobile. */
+  autoFocusAmount?: boolean;
+  /** Extra content under the submit button (e.g. the delete button when editing). */
+  footer?: ReactNode;
+}
+
+/**
+ * Shared form for creating and editing an expense or income. Use `NewEntryForm` or
+ * `EditEntryForm` rather than this directly.
+ */
 export function EntryForm({
   config,
-  onCreated,
-}: {
-  config: ModeConfig;
-  onCreated: () => void;
-}) {
+  initialValues,
+  submitLabel,
+  onSubmit,
+  onDone,
+  autoFocusAmount = true,
+  footer,
+}: EntryFormProps) {
   const categories = useAsync(config.getCategories, [config]);
 
-  const [amount, setAmount] = useState("");
-  const [categoryId, setCategoryId] = useState<number | null>(null);
+  const [amount, setAmount] = useState(initialValues.amount);
+  const [categoryId, setCategoryId] = useState<number | null>(initialValues.categoryId);
   const [categoryMissing, setCategoryMissing] = useState(false);
-  const [description, setDescription] = useState("");
-  const [spentAt, setSpentAt] = useState(todayString);
+  const [description, setDescription] = useState(initialValues.description);
+  const [spentAt, setSpentAt] = useState(initialValues.spentAt);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<unknown>();
 
@@ -37,14 +73,15 @@ export function EntryForm({
     setSubmitting(true);
     setError(undefined);
     try {
-      await config.create({
+      await onSubmit({
         // Accept "12,50" as well as "12.50". Validation (positive, 2 decimals) is done by the backend.
         amount: Number(amount.replace(",", ".")),
         category_id: categoryId,
         spent_at: spentAt,
-        description: description.trim() || undefined,
+        // null clears an existing description when editing.
+        description: description.trim() || null,
       });
-      onCreated();
+      onDone();
     } catch (err) {
       setError(err);
     } finally {
@@ -64,7 +101,7 @@ export function EntryForm({
           inputMode="decimal"
           placeholder="0.00"
           required
-          autoFocus
+          autoFocus={autoFocusAmount}
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
         />
@@ -133,8 +170,10 @@ export function EntryForm({
         className={`${primaryButtonClass} w-full py-3`}
         disabled={submitting}
       >
-        {submitting ? "Saving…" : config.saveLabel}
+        {submitting ? "Saving…" : submitLabel}
       </button>
+
+      {footer}
     </form>
   );
 }

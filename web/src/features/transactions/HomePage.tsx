@@ -1,36 +1,22 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router';
+import { useMemo, useState } from 'react';
 import { AddButton } from '../../shared/components/AddButton';
-import { EntryForm } from './EntryForm';
 import { ErrorMessages } from '../../shared/components/ErrorMessages';
+import { Sheet } from '../../shared/components/Sheet';
+import { useAsync } from '../../shared/lib/useAsync';
+import { categoryColors } from '../categories/categoryColors';
+import { MODES } from './mode';
 import { ModeSelector } from './ModeSelector';
+import { NewEntryForm } from './NewEntryForm';
+import { fetchPeriodSummary } from './period';
 import { PeriodNavigator } from './PeriodNavigator';
 import { PeriodSelector } from './PeriodSelector';
-import { Sheet } from '../../shared/components/Sheet';
 import { SummaryList } from './SummaryList';
-import { categoryColors } from '../categories/categoryColors';
-import { todayString } from '../../shared/lib/dates';
-import { MODES, parseMode, type Mode } from './mode';
-import { fetchPeriodSummary, type Period } from './period';
-import { useAsync } from '../../shared/lib/useAsync';
+import { useTransactionParams } from './useTransactionParams';
 
 export function HomePage() {
-  // Kept in the URL (?view=incomes) so a refresh or the back button keeps the current view.
-  const [searchParams, setSearchParams] = useSearchParams();
-  const mode = parseMode(searchParams.get('view'));
+  const { mode, selection, search, setMode, setPeriod, setAnchor } = useTransactionParams();
   const config = MODES[mode];
-
-  // The mode tints the whole app (page background, header, cards…), so it goes on <html>.
-  useEffect(() => {
-    document.documentElement.dataset.mode = mode;
-    return () => {
-      delete document.documentElement.dataset.mode;
-    };
-  }, [mode]);
-
-  const [period, setPeriod] = useState<Period>('month');
-  // The date the period is anchored to; kept when switching between day/week/month/year.
-  const [anchor, setAnchor] = useState(todayString);
+  const { period, anchor } = selection;
   const [formOpen, setFormOpen] = useState(false);
 
   const categories = useAsync(config.getCategories, [config]);
@@ -39,15 +25,10 @@ export function HomePage() {
     [categories.data],
   );
 
-  const selection = { period, anchor };
   const summary = useAsync(
     () => fetchPeriodSummary({ period, anchor }, config.getSummary),
     [config, period, anchor],
   );
-
-  function handleModeChange(next: Mode) {
-    setSearchParams(next === 'expenses' ? {} : { view: next }, { replace: true });
-  }
 
   function handleCreated() {
     setFormOpen(false);
@@ -57,7 +38,7 @@ export function HomePage() {
 
   return (
     <div className="space-y-4 pb-20">
-      <ModeSelector value={mode} onChange={handleModeChange} />
+      <ModeSelector value={mode} onChange={setMode} />
 
       <PeriodSelector value={period} onChange={setPeriod} />
 
@@ -72,7 +53,10 @@ export function HomePage() {
           <SummaryList
             rows={summary.data ?? []}
             colorOf={colorOf}
+            iconOf={(id) => categories.data?.find((c) => c.id === id)?.icon}
             emptyText={config.emptyText}
+            // Each category row opens its entries for this same period.
+            hrefFor={(categoryId) => `/category/${categoryId}${search}`}
           />
         </div>
       )}
@@ -80,7 +64,7 @@ export function HomePage() {
       <AddButton label={config.addLabel} onClick={() => setFormOpen(true)} />
 
       <Sheet title={config.newTitle} open={formOpen} onClose={() => setFormOpen(false)}>
-        <EntryForm key={mode} config={config} onCreated={handleCreated} />
+        <NewEntryForm key={mode} config={config} onCreated={handleCreated} />
       </Sheet>
     </div>
   );
