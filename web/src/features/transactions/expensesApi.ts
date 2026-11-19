@@ -1,16 +1,20 @@
 import { apiFetch } from '../../shared/api/client';
-import type { CategoryTotal, Expense, MonthString, NewExpense } from '../../shared/api/types';
+import type { CategoryTotal, DateString, Expense, NewExpense } from '../../shared/api/types';
 
+/** Date range, both ends inclusive ("YYYY-MM-DD"). Omit both to get everything. */
 export interface ExpenseFilter {
-  month?: MonthString;
+  from?: DateString;
+  to?: DateString;
 }
 
 export function getExpenses(filter: ExpenseFilter = {}): Promise<Expense[]> {
-  return apiFetch<Expense[]>('/expenses', { query: { month: filter.month } });
+  return apiFetch<Expense[]>('/expenses', { query: { from: filter.from, to: filter.to } });
 }
 
 export function getExpenseSummary(filter: ExpenseFilter = {}): Promise<CategoryTotal[]> {
-  return apiFetch<CategoryTotal[]>('/expenses/summary', { query: { month: filter.month } });
+  return apiFetch<CategoryTotal[]>('/expenses/summary', {
+    query: { from: filter.from, to: filter.to },
+  });
 }
 
 export function createExpense(expense: NewExpense): Promise<Expense> {

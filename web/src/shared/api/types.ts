@@ -4,8 +4,6 @@ export type DecimalString = string;
 /** Plain calendar date "YYYY-MM-DD" (no time zone). */
 export type DateString = string;
 
-/** Month "YYYY-MM". */
-export type MonthString = string;
 
 export interface Category {
   id: number;

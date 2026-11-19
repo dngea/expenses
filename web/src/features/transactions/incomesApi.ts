@@ -4,9 +4,9 @@
  * function body with the matching `apiFetch` call (e.g. `apiFetch('/incomes/summary', …)`)
  * and delete the in-memory data below.
  */
-import { currentMonth, shiftMonth } from '../../shared/lib/dates';
+import { addMonths, todayString } from '../../shared/lib/dates';
 import { sumDecimals } from '../../shared/lib/format';
-import type { Category, CategoryTotal, DecimalString, MonthString, NewExpense } from '../../shared/api/types';
+import type { Category, CategoryTotal, DecimalString, NewExpense } from '../../shared/api/types';
 import type { ExpenseFilter } from './expensesApi';
 
 export type NewIncome = NewExpense;
@@ -25,8 +25,8 @@ interface MockIncome {
   spent_at: string;
 }
 
-const thisMonth = currentMonth();
-const lastMonth = shiftMonth(thisMonth, -1);
+const thisMonth = todayString().slice(0, 7);
+const lastMonth = addMonths(todayString(), -1).slice(0, 7);
 
 const mockIncomes: MockIncome[] = [
   { amount: '2400.00', category_id: 1, spent_at: `${thisMonth}-01` },
@@ -44,10 +44,11 @@ export function getIncomeCategories(): Promise<Category[]> {
 }
 
 export function getIncomeSummary(filter: IncomeFilter = {}): Promise<CategoryTotal[]> {
-  const inMonth = (m: MonthString | undefined, date: string) => !m || date.startsWith(m);
+  const inRange = (date: string) =>
+    (!filter.from || date >= filter.from) && (!filter.to || date <= filter.to);
   const rows = MOCK_CATEGORIES.map((c) => {
     const amounts = mockIncomes
-      .filter((i) => i.category_id === c.id && inMonth(filter.month, i.spent_at))
+      .filter((i) => i.category_id === c.id && inRange(i.spent_at))
       .map((i) => i.amount);
     return amounts.length > 0 ? [{ category_id: c.id, category_name: c.name, total: sumDecimals(amounts) }] : [];
   });

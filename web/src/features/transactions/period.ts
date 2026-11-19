@@ -1,5 +1,13 @@
+import type { CategoryTotal, DateString } from '../../shared/api/types';
+import {
+  addDays,
+  addMonths,
+  endOfMonth,
+  startOfMonth,
+  startOfWeek,
+  toUtc,
+} from '../../shared/lib/dates';
 import type { ExpenseFilter } from './expensesApi';
-import type { CategoryTotal, MonthString } from '../../shared/api/types';
 
 export type Period = 'day' | 'week' | 'month' | 'year';
 
@@ -10,30 +18,75 @@ export const PERIODS: { value: Period; label: string }[] = [
   { value: 'year', label: 'Year' },
 ];
 
-/** The selected period plus the reference point it is anchored to. */
+/**
+ * The selected period plus the date it is anchored to. The anchor is kept when switching
+ * period: anchored on 19 Nov 2026, "Week" shows 16–22 Nov and "Year" shows 2026.
+ */
 export interface PeriodSelection {
   period: Period;
-  month: MonthString;
+  anchor: DateString;
 }
 
-/**
- * Maps a period selection to the API filter.
- * Returns `null` when the backend does not support that period yet.
- * Extend this function when the backend supports day/week/year filtering.
- */
-export function periodToFilter(selection: PeriodSelection): ExpenseFilter | null {
-  switch (selection.period) {
-    case 'month':
-      return { month: selection.month };
+/** First and last day (both inclusive) of the period that contains the anchor. */
+export function periodRange({ period, anchor }: PeriodSelection): Required<ExpenseFilter> {
+  switch (period) {
     case 'day':
-    case 'week':
+      return { from: anchor, to: anchor };
+    case 'week': {
+      const from = startOfWeek(anchor);
+      return { from, to: addDays(from, 6) };
+    }
+    case 'month':
+      return { from: startOfMonth(anchor), to: endOfMonth(anchor) };
     case 'year':
-      return null;
+      return { from: `${anchor.slice(0, 4)}-01-01`, to: `${anchor.slice(0, 4)}-12-31` };
   }
 }
 
-export function isPeriodSupported(period: Period): boolean {
-  return periodToFilter({ period, month: '' }) !== null;
+/** Moves the anchor one period back (-1) or forward (+1). */
+export function shiftPeriod({ period, anchor }: PeriodSelection, delta: number): DateString {
+  switch (period) {
+    case 'day':
+      return addDays(anchor, delta);
+    case 'week':
+      return addDays(anchor, 7 * delta);
+    case 'month':
+      return addMonths(anchor, delta);
+    case 'year':
+      return addMonths(anchor, 12 * delta);
+  }
+}
+
+const fmt = (options: Intl.DateTimeFormatOptions) =>
+  new Intl.DateTimeFormat('en-GB', { ...options, timeZone: 'UTC' });
+const dayFormat = fmt({ weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+const dayMonthFormat = fmt({ day: 'numeric', month: 'short' });
+const fullDateFormat = fmt({ day: 'numeric', month: 'short', year: 'numeric' });
+const monthFormat = fmt({ month: 'long', year: 'numeric' });
+
+/**
+ * Label for the navigator: "Thu 19 Nov 2026", "16 – 22 Nov 2026",
+ * "30 Nov – 6 Dec 2026", "November 2026", "2026".
+ */
+export function formatPeriod(selection: PeriodSelection): string {
+  const { from, to } = periodRange(selection);
+  switch (selection.period) {
+    case 'day':
+      return dayFormat.format(toUtc(from));
+    case 'week': {
+      if (from.slice(0, 4) !== to.slice(0, 4)) {
+        return `${fullDateFormat.format(toUtc(from))} – ${fullDateFormat.format(toUtc(to))}`;
+      }
+      if (from.slice(0, 7) !== to.slice(0, 7)) {
+        return `${dayMonthFormat.format(toUtc(from))} – ${fullDateFormat.format(toUtc(to))}`;
+      }
+      return `${Number(from.slice(8))} – ${fullDateFormat.format(toUtc(to))}`;
+    }
+    case 'month':
+      return monthFormat.format(toUtc(from));
+    case 'year':
+      return from.slice(0, 4);
+  }
 }
 
 /** Loads the per-category totals for a period. */
@@ -41,7 +94,5 @@ export function fetchPeriodSummary(
   selection: PeriodSelection,
   getSummary: (filter: ExpenseFilter) => Promise<CategoryTotal[]>,
 ): Promise<CategoryTotal[]> {
-  const filter = periodToFilter(selection);
-  if (!filter) return Promise.reject(new Error(`Period "${selection.period}" is not supported yet.`));
-  return getSummary(filter);
+  return getSummary(periodRange(selection));
 }

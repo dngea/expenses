@@ -1,18 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { AddButton } from '../../shared/components/AddButton';
-import { ComingSoon } from '../../shared/components/ComingSoon';
 import { EntryForm } from './EntryForm';
 import { ErrorMessages } from '../../shared/components/ErrorMessages';
 import { ModeSelector } from './ModeSelector';
-import { MonthNavigator } from './MonthNavigator';
+import { PeriodNavigator } from './PeriodNavigator';
 import { PeriodSelector } from './PeriodSelector';
 import { Sheet } from '../../shared/components/Sheet';
 import { SummaryList } from './SummaryList';
 import { categoryColors } from '../categories/categoryColors';
-import { currentMonth } from '../../shared/lib/dates';
+import { todayString } from '../../shared/lib/dates';
 import { MODES, parseMode, type Mode } from './mode';
-import { fetchPeriodSummary, isPeriodSupported, PERIODS, type Period } from './period';
+import { fetchPeriodSummary, type Period } from './period';
 import { useAsync } from '../../shared/lib/useAsync';
 
 export function HomePage() {
@@ -30,7 +29,8 @@ export function HomePage() {
   }, [mode]);
 
   const [period, setPeriod] = useState<Period>('month');
-  const [month, setMonth] = useState(currentMonth);
+  // The date the period is anchored to; kept when switching between day/week/month/year.
+  const [anchor, setAnchor] = useState(todayString);
   const [formOpen, setFormOpen] = useState(false);
 
   const categories = useAsync(config.getCategories, [config]);
@@ -39,10 +39,10 @@ export function HomePage() {
     [categories.data],
   );
 
-  const supported = isPeriodSupported(period);
+  const selection = { period, anchor };
   const summary = useAsync(
-    supported ? () => fetchPeriodSummary({ period, month }, config.getSummary) : null,
-    [config, period, month],
+    () => fetchPeriodSummary({ period, anchor }, config.getSummary),
+    [config, period, anchor],
   );
 
   function handleModeChange(next: Mode) {
@@ -55,19 +55,15 @@ export function HomePage() {
     categories.reload();
   }
 
-  const periodLabel = PERIODS.find((p) => p.value === period)?.label ?? period;
-
   return (
     <div className="space-y-4 pb-20">
       <ModeSelector value={mode} onChange={handleModeChange} />
 
       <PeriodSelector value={period} onChange={setPeriod} />
 
-      {period === 'month' && <MonthNavigator month={month} onChange={setMonth} />}
+      <PeriodNavigator selection={selection} onChange={setAnchor} />
 
-      {!supported ? (
-        <ComingSoon label={periodLabel} />
-      ) : summary.error ? (
+      {summary.error ? (
         <ErrorMessages error={summary.error} />
       ) : summary.loading && !summary.data ? (
         <p className="py-8 text-center text-ink-muted">Loading…</p>
