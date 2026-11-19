@@ -5,6 +5,9 @@
  * (bg-surface, text-ink-muted, bg-accent…) instead of raw palette colors.
  */
 @theme {
+  /* Max width of the app column. Layout, sheets and the floating + button all use it (max-w-app). */
+  --container-app: 42rem;
+
   --color-page: #0b1513;
   --color-surface: #14211e;
   --color-surface-2: #1c2d29;
