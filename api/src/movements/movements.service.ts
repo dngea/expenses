@@ -162,9 +162,9 @@ export class MovementsService {
       `
         ${SUMMARY_SELECT_TOTAL}
         WHERE 
-          categories.type = $3
-          AND movements.spent_at >= $1
-          AND movements.spent_at <= $2
+          categories.type = $1
+          AND movements.spent_at >= $2
+          AND movements.spent_at <= $3
         ${SUMMARY_GROUP_AND_ORDER} 
         `,
       [query.type, query.from, query.to],
