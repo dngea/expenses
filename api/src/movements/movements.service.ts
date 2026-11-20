@@ -6,32 +6,34 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import pg from 'pg';
-import { CreateExpenseDto } from './dto/create-expense.dto.js';
-import { ListExpensesQueryDto } from './dto/list-expenses-query.dto.js';
-import { UpdateExpenseDto } from './dto/update-expense.dto.js';
+import { CreateMovementDto } from './dto/create-movement.dto.js';
+import { ListMovementsQueryDto } from './dto/list-movement-query.dto.js';
+import { UpdateMovementDto } from './dto/update-movement.dto.js';
 
-const EXPENSE_WITH_CATEGORY_QUERY = `
+const MOVEMENT_WITH_CATEGORY_QUERY = `
           SELECT 
-              expenses.id, 
-              expenses.amount,
-              expenses.spent_at,
-              expenses.description,
+              movements.id, 
+              movements.amount,
+              movements.spent_at,
+              movements.description,
               categories.name AS category_name,
-              expenses.category_id
-          FROM expenses 
-          JOIN categories ON expenses.category_id = categories.id`;
+              movements.category_id
+          FROM movements 
+          JOIN 
+            categories ON movements.category_id = categories.id 
+            `;
 
-const ORDER_BY_EXPENSE_DATE = `ORDER BY expenses.spent_at DESC, expenses.id DESC`;
+const ORDER_BY_MOVEMENT_DATE = `ORDER BY movements.spent_at DESC, movements.id DESC`;
 
 const SUMMARY_SELECT_TOTAL = `
         SELECT 
           categories.id AS category_id,
           categories.name AS category_name,
-          SUM(expenses.amount) AS total
+          SUM(movements.amount) AS total
         FROM 
           categories
         JOIN
-          expenses ON expenses.category_id = categories.id
+          movements ON movements.category_id = categories.id
         `;
 
 const SUMMARY_GROUP_AND_ORDER = `
@@ -45,7 +47,7 @@ const notFoundCategoryMessage = (category_id: number) =>
   `Category with id: ${category_id} does not exist`;
 
 @Injectable()
-export class ExpensesService {
+export class MovementsService {
   private readonly pool: pg.Pool; // sin asignar valor aun, no tiene "= blabla"
 
   constructor(@Inject(pg.Pool) pool: pg.Pool) {
@@ -66,14 +68,16 @@ export class ExpensesService {
     }
   }
 
-  async getAll(query: ListExpensesQueryDto) {
+  async getAll(query: ListMovementsQueryDto) {
     // both missing
     if (!query.from && !query.to) {
       const result = await this.pool.query(
         `
-          ${EXPENSE_WITH_CATEGORY_QUERY}
-          ${ORDER_BY_EXPENSE_DATE}
+          ${MOVEMENT_WITH_CATEGORY_QUERY}
+          WHERE categories.type = $1 
+          ${ORDER_BY_MOVEMENT_DATE}
           `,
+        [query.type],
       );
       return result.rows;
     }
@@ -82,13 +86,14 @@ export class ExpensesService {
 
     const result = await this.pool.query(
       `
-        ${EXPENSE_WITH_CATEGORY_QUERY}
+        ${MOVEMENT_WITH_CATEGORY_QUERY}
         WHERE 
-          expenses.spent_at >= $1
-          AND expenses.spent_at <= $2
-        ${ORDER_BY_EXPENSE_DATE}
+          movements.spent_at >= $2
+          AND movements.spent_at <= $3
+          AND categories.type = $1 
+        ${ORDER_BY_MOVEMENT_DATE}
         `,
-      [query.from, query.to],
+      [query.type, query.from, query.to],
     );
 
     return result.rows;
@@ -97,26 +102,26 @@ export class ExpensesService {
   async getOne(id: number) {
     const result = await this.pool.query(
       `
-      ${EXPENSE_WITH_CATEGORY_QUERY}
-      WHERE expenses.id = $1
+      ${MOVEMENT_WITH_CATEGORY_QUERY}
+      WHERE movements.id = $1
       `,
       [id],
     );
 
     if (result.rows.length === 0) {
-      throw new NotFoundException(`The expense with id ${id} does not exist`);
+      throw new NotFoundException(`The movement with id ${id} does not exist`);
     }
     return result.rows[0];
   }
 
-  async createOne(data: CreateExpenseDto) {
+  async createOne(data: CreateMovementDto) {
     const { category_id, amount, spent_at, description } = data;
 
     try {
       const result = await this.pool.query(
         `
         INSERT INTO 
-          expenses (category_id, amount, spent_at, description)
+          movements (category_id, amount, spent_at, description)
         VALUES 
           ($1, $2, $3, $4)
         RETURNING 
@@ -136,13 +141,17 @@ export class ExpensesService {
     }
   }
 
-  async getSummary(query: ListExpensesQueryDto) {
+  async getSummary(query: ListMovementsQueryDto) {
     // if (from and to) missing, return all
     if (!query.from && !query.to) {
-      const result = await this.pool.query(`
+      const result = await this.pool.query(
+        `
         ${SUMMARY_SELECT_TOTAL}
+        WHERE categories.type = $1
         ${SUMMARY_GROUP_AND_ORDER} 
-        `);
+        `,
+        [query.type],
+      );
 
       return result.rows;
     }
@@ -153,17 +162,18 @@ export class ExpensesService {
       `
         ${SUMMARY_SELECT_TOTAL}
         WHERE 
-          expenses.spent_at >= $1
-          AND expenses.spent_at <= $2
+          categories.type = $3
+          AND movements.spent_at >= $1
+          AND movements.spent_at <= $2
         ${SUMMARY_GROUP_AND_ORDER} 
         `,
-      [query.from, query.to],
+      [query.type, query.from, query.to],
     );
 
     return result.rows;
   }
 
-  async updateOne(id: number, input: UpdateExpenseDto) {
+  async updateOne(id: number, input: UpdateMovementDto) {
     const entry = await this.getOne(id);
 
     // no need to return or check if entry exist, it would throw error in getOne()
@@ -179,14 +189,14 @@ export class ExpensesService {
       await this.pool.query(
         `
         UPDATE 
-          expenses 
+          movements 
         SET 
           amount = $2, 
           spent_at = $3, 
           category_id= $4, 
           description = $5
         WHERE
-          expenses.id = $1
+          movements.id = $1
         
         `,
         [
@@ -215,8 +225,8 @@ export class ExpensesService {
 
     await this.pool.query(
       `
-      DELETE FROM expenses
-      WHERE expenses.id = $1
+      DELETE FROM movements
+      WHERE movements.id = $1
       `,
       [id],
     );

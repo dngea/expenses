@@ -9,7 +9,7 @@ import {
   Matches,
 } from 'class-validator';
 
-export class CreateExpenseDto {
+export class CreateMovementDto {
   @IsNumber({ maxDecimalPlaces: 2 })
   @IsNotEmpty()
   @IsPositive()

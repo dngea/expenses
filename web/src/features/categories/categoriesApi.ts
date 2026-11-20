@@ -15,7 +15,6 @@ export function updateCategory(
   id: number,
   category: NewCategory,
 ): Promise<Category> {
-  console.log("category id >>", id);
   return apiFetch<Category>(`/categories/${id}`, {
     method: "PATCH",
     body: category,

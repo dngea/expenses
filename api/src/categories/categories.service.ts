@@ -7,6 +7,7 @@ import {
 import pg from 'pg';
 import { CreateCategoryDto } from './dto/create-category.dto.js';
 import { UpdateCategoryDto } from './dto/update-category.dto.js';
+import { ListCategoriesDto } from './dto/list-categories.dto.js';
 
 // El servicio, se ocupa:
 // de la Lógica, los datos,
@@ -30,9 +31,14 @@ export class CategoriesService {
   }
   // --
 
-  async getAll() {
+  async getAll(query: ListCategoriesDto) {
     const result = await this.pool.query(
-      'SELECT * FROM categories ORDER BY id',
+      `
+        SELECT * 
+        FROM categories 
+        WHERE categories.type = $1
+        ORDER BY id`,
+      [query.type],
     );
     return result.rows;
   }
@@ -52,11 +58,12 @@ export class CategoriesService {
   }
 
   async createOne(body: CreateCategoryDto) {
-    const result = await this.pool.query(
-      'SELECT * FROM categories WHERE LOWER(name) = LOWER($1)',
-      [body.name],
-    );
-    const existingCategory = result.rows[0];
+    const existingCategory = (
+      await this.pool.query(
+        'SELECT * FROM categories WHERE LOWER(name) = LOWER($1)',
+        [body.name],
+      )
+    ).rows[0];
 
     if (existingCategory) {
       throw new ConflictException(categoryExistsMessage(body.name));
@@ -64,8 +71,10 @@ export class CategoriesService {
 
     try {
       const insertResult = await this.pool.query(
-        'INSERT INTO categories (name, icon, color) VALUES ($1, $2, $3) RETURNING *',
-        [body.name, body.icon, body.color],
+        ` INSERT INTO categories (name, icon, color, type) 
+          VALUES ($1, $2, $3, $4) 
+          RETURNING *`,
+        [body.name, body.icon, body.color, body.type],
       );
 
       return insertResult.rows[0];
@@ -74,7 +83,6 @@ export class CategoriesService {
         throw new ConflictException(categoryExistsMessage(body.name));
       }
 
-      // rethrow error
       throw error;
     }
   }
@@ -133,17 +141,19 @@ export class CategoriesService {
   }
 
   async updateOne(id: number, body: UpdateCategoryDto) {
-    await this.getOne(id);
+    const category = await this.getOne(id);
 
-    const categoryWithSameName = (
-      await this.pool.query(
-        'SELECT * FROM categories WHERE LOWER(name) = LOWER($1)',
-        [body.name],
-      )
-    ).rows[0];
+    if (body.name) {
+      const categoryWithSameName = (
+        await this.pool.query(
+          'SELECT * FROM categories WHERE LOWER(name) = LOWER($1)',
+          [body.name],
+        )
+      ).rows[0];
 
-    if (categoryWithSameName && categoryWithSameName.id !== id)
-      throw new ConflictException(categoryExistsMessage(body.name));
+      if (categoryWithSameName && categoryWithSameName.id !== id)
+        throw new ConflictException(categoryExistsMessage(body.name));
+    }
 
     try {
       const categoryEdited = (
@@ -151,13 +161,22 @@ export class CategoriesService {
           `UPDATE categories
            SET name = $1, icon = $2, color = $3 
            WHERE id = $4 RETURNING *`,
-          [body.name, body.icon, body.color, id],
+          [
+            body.name ?? category.name,
+            body.icon ?? category.icon,
+            body.color ?? category.color,
+            id,
+          ],
         )
       ).rows[0];
 
       return categoryEdited;
     } catch (error) {
-      if (error instanceof pg.DatabaseError && error.code === '23505') {
+      if (
+        error instanceof pg.DatabaseError &&
+        error.code === '23505' &&
+        body.name
+      ) {
         throw new ConflictException(categoryExistsMessage(body.name));
       }
 

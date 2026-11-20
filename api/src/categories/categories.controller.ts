@@ -16,6 +16,7 @@ import { CategoriesService } from './categories.service.js';
 import { CreateCategoryDto } from './dto/create-category.dto.js';
 import { UpdateCategoryDto } from './dto/update-category.dto.js';
 import { JwtAuthGuard } from '../auth/jwt-auth/jwt-auth.guard.js';
+import { ListCategoriesDto } from './dto/list-categories.dto.js';
 
 // el controlador se encarga del HTTP:
 // qué ruta maneja,
@@ -28,8 +29,8 @@ export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
   @Get()
-  getAll() {
-    return this.categoriesService.getAll();
+  getAll(@Query() query: ListCategoriesDto) {
+    return this.categoriesService.getAll(query);
   }
 
   @Get(':id')
