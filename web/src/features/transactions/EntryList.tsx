@@ -1,14 +1,14 @@
 import { ChevronRight } from "lucide-react";
-import type { Expense } from "../../shared/api/types";
+import type { Movement } from "../../shared/api/types";
 import { formatEur } from "../../shared/lib/format";
 import { toUtc } from "../../shared/lib/dates";
 
 interface EntryListProps {
   /** Entries of a single category (the page header already says which one). */
-  entries: Expense[];
+  entries: Movement[];
   /** The category's color, shown as a small dot on each row. */
   color: string;
-  onSelect: (entry: Expense) => void;
+  onSelect: (entry: Movement) => void;
 }
 
 const dateFormat = new Intl.DateTimeFormat("en-GB", {

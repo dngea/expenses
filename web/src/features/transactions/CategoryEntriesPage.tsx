@@ -1,7 +1,7 @@
 import { ChevronLeft } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
-import type { Expense } from '../../shared/api/types';
+import type { Movement } from '../../shared/api/types';
 import { ErrorMessages } from '../../shared/components/ErrorMessages';
 import { Sheet } from '../../shared/components/Sheet';
 import { formatEur, sumDecimals } from '../../shared/lib/format';
@@ -23,7 +23,7 @@ export function CategoryEntriesPage() {
   const { mode, selection, search } = useTransactionParams();
   const config = MODES[mode];
   const { period, anchor } = selection;
-  const [editing, setEditing] = useState<Expense | null>(null);
+  const [editing, setEditing] = useState<Movement | null>(null);
 
   const categories = useAsync(config.getCategories, [config]);
   const category = categories.data?.find((c) => c.id === categoryId);

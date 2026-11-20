@@ -1,21 +1,19 @@
 import { getCategories } from '../categories/categoriesApi';
 import {
-  createExpense,
-  deleteExpense,
-  getExpenses,
-  getExpenseSummary,
-  updateExpense,
-  type ExpenseFilter,
-} from './expensesApi';
-import {
-  createIncome,
-  deleteIncome,
-  getIncomeCategories,
-  getIncomes,
-  getIncomeSummary,
-  updateIncome,
-} from './incomesApi';
-import type { Category, CategoryTotal, Expense, NewExpense } from '../../shared/api/types';
+  createMovement,
+  deleteMovement,
+  getMovements,
+  getMovementSummary,
+  updateMovement,
+  type MovementFilter,
+} from './movementsApi';
+import type {
+  Category,
+  CategoryTotal,
+  Movement,
+  MovementType,
+  NewMovement,
+} from '../../shared/api/types';
 
 /** Which ledger the home screen shows. Each mode has its own accent color (see `index.css`). */
 export type Mode = 'expenses' | 'incomes';
@@ -30,12 +28,27 @@ export interface ModeConfig {
   saveLabel: string;
   emptyText: string;
   noCategoriesText: string;
+  /** Value of `?type=` for this ledger's categories and movements. */
+  type: MovementType;
   getCategories: () => Promise<Category[]>;
-  getSummary: (filter: ExpenseFilter) => Promise<CategoryTotal[]>;
-  getEntries: (filter: ExpenseFilter) => Promise<Expense[]>;
-  create: (entry: NewExpense) => Promise<unknown>;
-  update: (id: number, entry: NewExpense) => Promise<unknown>;
+  getSummary: (filter: MovementFilter) => Promise<CategoryTotal[]>;
+  getEntries: (filter: MovementFilter) => Promise<Movement[]>;
+  create: (entry: NewMovement) => Promise<unknown>;
+  update: (id: number, entry: NewMovement) => Promise<unknown>;
   remove: (id: number) => Promise<unknown>;
+}
+
+/** The API calls of one ledger, all bound to the same `?type=`. */
+function movementApi(type: MovementType) {
+  return {
+    type,
+    getCategories: () => getCategories(type),
+    getSummary: (filter: MovementFilter) => getMovementSummary(type, filter),
+    getEntries: (filter: MovementFilter) => getMovements(type, filter),
+    create: createMovement,
+    update: updateMovement,
+    remove: deleteMovement,
+  } satisfies Partial<ModeConfig>;
 }
 
 export const MODES: Record<Mode, ModeConfig> = {
@@ -48,12 +61,7 @@ export const MODES: Record<Mode, ModeConfig> = {
     saveLabel: 'Save expense',
     emptyText: 'No expenses in this period.',
     noCategoriesText: 'No categories yet. Create one in the menu first.',
-    getCategories,
-    getSummary: getExpenseSummary,
-    getEntries: getExpenses,
-    create: createExpense,
-    update: updateExpense,
-    remove: deleteExpense,
+    ...movementApi('expense'),
   },
   incomes: {
     label: 'Income',
@@ -63,13 +71,8 @@ export const MODES: Record<Mode, ModeConfig> = {
     addLabel: 'Add income',
     saveLabel: 'Save income',
     emptyText: 'No income in this period.',
-    noCategoriesText: 'No income categories yet.',
-    getCategories: getIncomeCategories,
-    getSummary: getIncomeSummary,
-    getEntries: getIncomes,
-    create: createIncome,
-    update: updateIncome,
-    remove: deleteIncome,
+    noCategoriesText: 'No income categories yet. Create one in the menu first.',
+    ...movementApi('income'),
   },
 };
 

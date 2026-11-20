@@ -5,6 +5,9 @@ export type DecimalString = string;
 export type DateString = string;
 
 
+/** Every category and movement is either an expense or an income (`?type=` in the API). */
+export type MovementType = "expense" | "income";
+
 export interface Category {
   id: number;
   name: string;
@@ -20,7 +23,7 @@ export interface NewCategory {
   icon: string;
 }
 
-export interface Expense {
+export interface Movement {
   id: number;
   amount: DecimalString;
   category_id: number;
@@ -35,7 +38,7 @@ export interface CategoryTotal {
   total: DecimalString;
 }
 
-export interface NewExpense {
+export interface NewMovement {
   amount: number;
   category_id: number;
   spent_at: DateString;

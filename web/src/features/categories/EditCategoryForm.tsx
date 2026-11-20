@@ -1,8 +1,8 @@
 import { useState } from "react";
-import type { Category } from "../../shared/api/types";
+import type { Category, MovementType } from "../../shared/api/types";
 import { ConfirmDialog } from "../../shared/components/ConfirmDialog";
 import { ErrorMessages } from "../../shared/components/ErrorMessages";
-import { countExpensesInCategory } from "../transactions/expensesApi";
+import { countMovementsInCategory } from "../transactions/movementsApi";
 import { deleteCategory, updateCategory } from "./categoriesApi";
 import { CategoryForm } from "./CategoryForm";
 import type { CategoryColorKey } from "./categoryColors";
@@ -10,6 +10,8 @@ import { DEFAULT_CATEGORY_ICON, isCategoryIconKey } from "./categoryIcons";
 
 interface EditCategoryFormProps {
   category: Category;
+  /** Expense or income category; needed to count its movements before deleting. */
+  type: MovementType;
   /**
    * The color the category is shown with right now. For categories without a saved color
    * this is the automatic one, so the form starts with what the user actually sees.
@@ -21,6 +23,7 @@ interface EditCategoryFormProps {
 
 export function EditCategoryForm({
   category,
+  type,
   currentColor,
   onSaved,
 }: EditCategoryFormProps) {
@@ -35,7 +38,7 @@ export function EditCategoryForm({
       onSubmit={(values) => updateCategory(category.id, values)}
       onDone={onSaved}
       autoFocusName={false}
-      footer={<DeleteCategoryButton category={category} onDeleted={onSaved} />}
+      footer={<DeleteCategoryButton category={category} type={type} onDeleted={onSaved} />}
     />
   );
 }
@@ -46,9 +49,11 @@ export function EditCategoryForm({
  */
 function DeleteCategoryButton({
   category,
+  type,
   onDeleted,
 }: {
   category: Category;
+  type: MovementType;
   onDeleted: () => void;
 }) {
   /** null = modal closed; otherwise the number of expenses in the category. */
@@ -63,7 +68,7 @@ function DeleteCategoryButton({
     setError(undefined);
     setDialogError(undefined);
     try {
-      setExpenseCount(await countExpensesInCategory(category.id));
+      setExpenseCount(await countMovementsInCategory(type, category.id));
     } catch (err) {
       setError(err);
     } finally {

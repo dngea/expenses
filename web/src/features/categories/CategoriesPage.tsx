@@ -5,6 +5,9 @@ import { AddButton } from '../../shared/components/AddButton';
 import { ErrorMessages } from '../../shared/components/ErrorMessages';
 import { Sheet } from '../../shared/components/Sheet';
 import { useAsync } from '../../shared/lib/useAsync';
+import { MODES } from '../transactions/mode';
+import { ModeSelector } from '../transactions/ModeSelector';
+import { useTransactionParams } from '../transactions/useTransactionParams';
 import { getCategories } from './categoriesApi';
 import { CATEGORY_COLOR_KEYS, CATEGORY_COLORS, categoryColorKeys } from './categoryColors';
 import { CategoryIcon } from './CategoryIcon';
@@ -12,7 +15,10 @@ import { EditCategoryForm } from './EditCategoryForm';
 import { NewCategoryForm } from './NewCategoryForm';
 
 export function CategoriesPage() {
-  const categories = useAsync(getCategories, []);
+  // Expense and income categories are separate lists; the ?view= param picks which one.
+  const { mode, setMode } = useTransactionParams();
+  const { type } = MODES[mode];
+  const categories = useAsync(() => getCategories(type), [type]);
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
 
@@ -31,6 +37,8 @@ export function CategoriesPage() {
   return (
     <div className="space-y-4 pb-20">
       <h2 className="text-xl font-semibold">Categories</h2>
+
+      <ModeSelector value={mode} onChange={setMode} />
 
       {categories.error ? (
         <ErrorMessages error={categories.error} />
@@ -60,7 +68,7 @@ export function CategoriesPage() {
       <AddButton label="Add category" onClick={() => setCreating(true)} />
 
       <Sheet title="New category" open={creating} onClose={() => setCreating(false)}>
-        <NewCategoryForm onCreated={handleSaved} initialColor={nextColor} />
+        <NewCategoryForm type={type} onCreated={handleSaved} initialColor={nextColor} />
       </Sheet>
 
       <Sheet title="Edit category" open={editing !== null} onClose={() => setEditing(null)}>
@@ -68,6 +76,7 @@ export function CategoriesPage() {
           <EditCategoryForm
             key={editing.id}
             category={editing}
+            type={type}
             currentColor={colorKeyOf(editing.id)}
             onSaved={handleSaved}
           />

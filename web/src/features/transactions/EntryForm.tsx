@@ -1,5 +1,5 @@
 import { useState, type ReactNode, type SyntheticEvent } from "react";
-import type { NewExpense } from "../../shared/api/types";
+import type { NewMovement } from "../../shared/api/types";
 import type { ModeConfig } from "./mode";
 import { todayString } from "../../shared/lib/dates";
 import { useAsync } from "../../shared/lib/useAsync";
@@ -32,7 +32,7 @@ interface EntryFormProps {
   initialValues: EntryFormValues;
   submitLabel: string;
   /** Saves the values; throw to show the error in the form. */
-  onSubmit: (entry: NewExpense) => Promise<unknown>;
+  onSubmit: (entry: NewMovement) => Promise<unknown>;
   /** Called after a successful save. */
   onDone: () => void;
   /** Focus the amount on open. Off for editing, so the keyboard doesn't pop up on mobile. */

@@ -7,7 +7,7 @@ import {
   startOfWeek,
   toUtc,
 } from '../../shared/lib/dates';
-import type { ExpenseFilter } from './expensesApi';
+import type { MovementFilter } from './movementsApi';
 
 export type Period = 'day' | 'week' | 'month' | 'year';
 
@@ -28,7 +28,7 @@ export interface PeriodSelection {
 }
 
 /** First and last day (both inclusive) of the period that contains the anchor. */
-export function periodRange({ period, anchor }: PeriodSelection): Required<ExpenseFilter> {
+export function periodRange({ period, anchor }: PeriodSelection): Required<MovementFilter> {
   switch (period) {
     case 'day':
       return { from: anchor, to: anchor };
@@ -92,7 +92,7 @@ export function formatPeriod(selection: PeriodSelection): string {
 /** Loads the per-category totals for a period. */
 export function fetchPeriodSummary(
   selection: PeriodSelection,
-  getSummary: (filter: ExpenseFilter) => Promise<CategoryTotal[]>,
+  getSummary: (filter: MovementFilter) => Promise<CategoryTotal[]>,
 ): Promise<CategoryTotal[]> {
   return getSummary(periodRange(selection));
 }

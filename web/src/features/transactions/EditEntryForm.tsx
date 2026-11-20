@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Expense } from "../../shared/api/types";
+import type { Movement } from "../../shared/api/types";
 import { ConfirmDialog } from "../../shared/components/ConfirmDialog";
 import { formatEur } from "../../shared/lib/format";
 import { EntryForm } from "./EntryForm";
@@ -7,7 +7,7 @@ import type { ModeConfig } from "./mode";
 
 interface EditEntryFormProps {
   config: ModeConfig;
-  entry: Expense;
+  entry: Movement;
   /** Called after saving or deleting. */
   onSaved: () => void;
 }
@@ -38,7 +38,7 @@ function DeleteEntryButton({
   onDeleted,
 }: {
   config: ModeConfig;
-  entry: Expense;
+  entry: Movement;
   onDeleted: () => void;
 }) {
   const [open, setOpen] = useState(false);
