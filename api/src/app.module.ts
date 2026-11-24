@@ -6,6 +6,7 @@ import { DatabaseModule } from './database/database.module.js';
 import { MovementModule } from './movements/movements.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { HealthModule } from './health/health.module.js';
+import { RecurringMovementsModule } from './recurring-movements/recurring-movements.module.js';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { HealthModule } from './health/health.module.js';
     MovementModule,
     AuthModule,
     HealthModule,
+    RecurringMovementsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

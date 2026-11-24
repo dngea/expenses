@@ -9,6 +9,7 @@ import pg from 'pg';
 import { CreateMovementDto } from './dto/create-movement.dto.js';
 import { ListMovementsQueryDto } from './dto/list-movement-query.dto.js';
 import { UpdateMovementDto } from './dto/update-movement.dto.js';
+import { notFoundCategoryMessage } from '../common/messages.js';
 
 const MOVEMENT_WITH_CATEGORY_QUERY = `
           SELECT 
@@ -42,9 +43,6 @@ const SUMMARY_GROUP_AND_ORDER = `
         ORDER BY 
           total DESC, categories.id ASC
           `;
-
-const notFoundCategoryMessage = (category_id: number) =>
-  `Category with id: ${category_id} does not exist`;
 
 @Injectable()
 export class MovementsService {
