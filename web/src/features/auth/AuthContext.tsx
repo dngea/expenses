@@ -7,7 +7,7 @@ import {
 } from "react";
 import React from "react";
 import { fetchMe } from "./authApi";
-import { login as loginRequest } from "./authApi";
+import { login as loginRequest, logout as logoutRequest } from "./authApi";
 
 type AuthState =
   | { status: "loading" }
@@ -21,6 +21,7 @@ type AuthContextValue = {
   authState: AuthState;
   refresh: () => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
 };
 
 export const AuthContext = createContext<AuthContextValue | undefined>(
@@ -49,13 +50,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     [refresh],
   );
 
+  const logout = useCallback(async () => {
+    await logoutRequest();
+    setState({ status: "unauthenticated" });
+  }, []);
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     refresh();
   }, [refresh]);
 
   return (
-    <AuthContext value={{ authState: state, refresh, login }}>
+    <AuthContext value={{ authState: state, refresh, login, logout }}>
       {children}
     </AuthContext>
   );

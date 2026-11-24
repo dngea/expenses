@@ -13,6 +13,7 @@ import { AuthService } from './auth.service.js';
 import { LoginUserDto } from './dto/login.dto.js';
 import type { Response, Request } from 'express';
 import { JwtAuthGuard } from './jwt-auth/jwt-auth.guard.js';
+import { TOKEN_TTL_SECONDS } from './auth.constants.js';
 
 interface AuthenticatedRequest extends Request {
   user: { id: number };
@@ -42,8 +43,8 @@ export class AuthController {
       secure: process.env.NODE_ENV === 'production',
       // protection against CSRF
       sameSite: 'lax',
-      // miliseconds
-      maxAge: 1500 * 1000,
+      // (7d) -> convert to miliseconds using x1000
+      maxAge: TOKEN_TTL_SECONDS * 1000,
     });
   }
 
@@ -52,5 +53,16 @@ export class AuthController {
   me(@Req() req: AuthenticatedRequest) {
     const userId = req.user.id;
     return this.authService.me(userId);
+  }
+
+  @Post('logout')
+  @HttpCode(204)
+  logout(@Res({ passthrough: true }) res: Response) {
+    res.clearCookie('token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: TOKEN_TTL_SECONDS * 1000,
+    });
   }
 }

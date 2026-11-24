@@ -36,6 +36,11 @@ export class MovementsController {
     return this.movementsService.getSummary(query);
   }
 
+  @Get('balance')
+  getBalance() {
+    return this.movementsService.getBalance();
+  }
+
   @Get(':id')
   getOne(@Param('id', ParseIntPipe) id: number) {
     return this.movementsService.getOne(id);

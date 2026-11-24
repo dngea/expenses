@@ -86,3 +86,15 @@ body {
 .debug {
   border: 2px dashed red;
 }
+
+/*
+ * Hide scrollbars everywhere (page, sheets, lists) but keep scrolling
+ * with touch, wheel and keyboard. Mobile-first app, the bars only add noise.
+ */
+* {
+  scrollbar-width: none; /* Firefox, Chrome 121+, Safari 18.2+ */
+}
+
+*::-webkit-scrollbar {
+  display: none; /* older Safari / Chrome */
+}

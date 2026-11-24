@@ -2,6 +2,7 @@ import { apiFetch } from "../../shared/api/client";
 import type {
   CategoryTotal,
   DateString,
+  DecimalString,
   Movement,
   MovementType,
   NewMovement,
@@ -63,4 +64,9 @@ export function updateMovement(
 
 export function deleteMovement(id: number): Promise<void> {
   return apiFetch<void>(`/movements/${id}`, { method: "DELETE" });
+}
+
+/** Total incomes minus total expenses, over all time. Can be negative. */
+export function getBalance(): Promise<{ balance: DecimalString }> {
+  return apiFetch<{ balance: DecimalString }>("/movements/balance");
 }

@@ -173,6 +173,23 @@ export class MovementsService {
     return result.rows;
   }
 
+  async getBalance() {
+    const result = await this.pool.query(
+      `
+      SELECT 
+        total_incomes - total_expenses AS balance
+      FROM (
+        SELECT 
+          COALESCE(SUM(movements.amount) FILTER (WHERE categories.type = 'income'), 0) as total_incomes,
+          COALESCE(SUM(movements.amount) FILTER (WHERE categories.type = 'expense'), 0) as total_expenses
+        FROM movements JOIN categories ON movements.category_id = categories.id
+      ) AS totals
+      `,
+    );
+
+    return result.rows[0];
+  }
+
   async updateOne(id: number, input: UpdateMovementDto) {
     const entry = await this.getOne(id);
 

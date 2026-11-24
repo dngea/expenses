@@ -1,4 +1,4 @@
-import { MODE_ORDER, MODES, type Mode } from './mode';
+import { MODE_ORDER, MODES, type Mode } from "./mode";
 
 interface ModeSelectorProps {
   value: Mode;
@@ -11,7 +11,11 @@ interface ModeSelectorProps {
  */
 export function ModeSelector({ value, onChange }: ModeSelectorProps) {
   return (
-    <div role="tablist" aria-label="View" className="grid grid-cols-2 gap-1 rounded-full bg-surface p-1 ring-1 ring-line">
+    <div
+      role="tablist"
+      aria-label="View"
+      className="bg-surface ring-line grid grid-cols-2 gap-1 rounded-xl p-1 ring-1"
+    >
       {MODE_ORDER.map((mode) => {
         const active = value === mode;
         return (
@@ -21,8 +25,8 @@ export function ModeSelector({ value, onChange }: ModeSelectorProps) {
             role="tab"
             aria-selected={active}
             onClick={() => onChange(mode)}
-            className={`rounded-full py-2.5 font-semibold transition-colors ${
-              active ? 'bg-accent text-page' : 'text-ink-muted hover:text-ink'
+            className={`rounded-lg py-2 text-base font-semibold transition-colors ${
+              active ? "bg-accent text-page" : "text-ink-muted hover:text-ink"
             }`}
           >
             {MODES[mode].label}

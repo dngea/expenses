@@ -4,7 +4,9 @@ import { ErrorMessages } from '../../shared/components/ErrorMessages';
 import { Sheet } from '../../shared/components/Sheet';
 import { useAsync } from '../../shared/lib/useAsync';
 import { categoryColors } from '../categories/categoryColors';
+import { Balance } from './Balance';
 import { MODES } from './mode';
+import { getBalance } from './movementsApi';
 import { ModeSelector } from './ModeSelector';
 import { NewEntryForm } from './NewEntryForm';
 import { fetchPeriodSummary } from './period';
@@ -25,6 +27,8 @@ export function HomePage() {
     [categories.data],
   );
 
+  const balance = useAsync(getBalance, []);
+
   const summary = useAsync(
     () => fetchPeriodSummary({ period, anchor }, config.getSummary),
     [config, period, anchor],
@@ -33,11 +37,14 @@ export function HomePage() {
   function handleCreated() {
     setFormOpen(false);
     summary.reload();
+    balance.reload();
     categories.reload();
   }
 
   return (
     <div className="space-y-4 pb-20">
+      <Balance balance={balance.data?.balance} />
+
       <ModeSelector value={mode} onChange={setMode} />
 
       <PeriodSelector value={period} onChange={setPeriod} />

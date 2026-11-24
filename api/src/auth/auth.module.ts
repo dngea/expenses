@@ -3,6 +3,7 @@ import { AuthService } from './auth.service.js';
 import { AuthController } from './auth.controller.js';
 import { DatabaseModule } from '../database/database.module.js';
 import { JwtModule } from '@nestjs/jwt';
+import { TOKEN_TTL_SECONDS } from './auth.constants.js';
 
 @Module({
   imports: [
@@ -10,7 +11,7 @@ import { JwtModule } from '@nestjs/jwt';
     JwtModule.registerAsync({
       useFactory: () => ({
         secret: process.env.JWT_SECRET,
-        signOptions: { expiresIn: '7d' },
+        signOptions: { expiresIn: TOKEN_TTL_SECONDS },
       }),
     }),
   ],
