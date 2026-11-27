@@ -143,4 +143,64 @@ export class RecurringMovementsService {
       throw error;
     }
   }
+
+  async deleteOne(id: number) {
+    // check if exists
+    await this.getOne(id);
+
+    await this.pool.query(
+      `
+        DELETE FROM recurring_movements
+        WHERE recurring_movements.id = $1
+        `,
+      [id],
+    );
+  }
+
+  async generateMovements() {
+    // iterate
+    // get all recurring movements with important new fields
+    // for (const recurring of recurringMovements) {
+    // to -> the least number between today and end_date
+    // from -> the next day after the last generated, or start_date
+
+    const rules = (
+      await this.pool.query(
+        `
+      SELECT
+         *,
+         LEAST(end_date, CURRENT_DATE) AS to_date,
+         COALESCE(generated_until + 1, start_date) AS from_date
+      FROM recurring_movements
+      `,
+      )
+    ).rows;
+
+    for (const rule of rules) {
+      if (rule.from_date > rule.to_date) continue;
+    }
+
+    // }
+
+    // is generated until less than today or less than end date if has it
+    // generate movement using post createOne in movements (fill fields of id, date of rcurring movement)
+  }
 }
+
+const normalizeDay = (day: number, from: string, to: string) => {
+  if (day <= 28) return day;
+};
+
+const occurrenceDate = (year: number, month: number, day: number) => {
+  const totalDays = daysInMonth(year, month);
+  const occurrenceDay = Math.min(totalDays, day);
+
+  return `${year}-${String(month).padStart(2, '0')}-${String(occurrenceDay).padStart(2, '0')}`;
+};
+
+const daysInMonth = (year: number, month: number): number => {
+  //January starts on 0
+  const total = new Date(year, month, 0).getDate();
+
+  return total;
+};
